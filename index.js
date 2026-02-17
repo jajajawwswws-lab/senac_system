@@ -19,7 +19,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 const formData = new FormData(form);
                 formData.append('g-recaptcha-response', token);
 
-                const respostaBackend = await fetch("back2.js", {
+                // ✅ CORREÇÃO: Apontar para o servidor Node.js
+                const respostaBackend = await fetch("http://localhost:3000/login", {
                     method: "POST",
                     body: formData
                 });
@@ -28,6 +29,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 if (!resultado.sucesso) {
                     alert("⚠ Erro no reCAPTCHA: " + resultado.erro);
+                    return;
+                }
+
+                // Verificar se o login foi válido
+                if (!resultado.login_valido) {
+                    alert("❌ " + resultado.erro);
                     return;
                 }
 
@@ -43,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             } catch (erro) {
                 console.error("Erro:", erro);
-                alert(" Ocorreu um erro inesperado." + erro.message);
+                alert("❌ Ocorreu um erro inesperado: " + erro.message);
             }
         });
     });
@@ -53,12 +60,12 @@ function validarCampos(email, password) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
-        alert("Digite um e-mail válido.");
+        alert("❌ Digite um e-mail válido.");
         return false;
     }
 
     if (password.length < 6) {
-        alert("A senha deve ter pelo menos 6 caracteres.");
+        alert("❌ A senha deve ter pelo menos 6 caracteres.");
         return false;
     }
 
