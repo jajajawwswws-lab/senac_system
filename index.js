@@ -56,7 +56,10 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 });
-
+setTimeout(async () => 
+    {
+        await recaptcha.ready(async function())
+    }, 1000)
 function validarCampos(email, password) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
