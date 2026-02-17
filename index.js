@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 const formData = new FormData(form);
                 formData.append('g-recaptcha-response', token);
 
-                const respostaBackend = await fetch("back2.php", {
+                const respostaBackend = await fetch("back2.js", {
                     method: "POST",
                     body: formData
                 });
