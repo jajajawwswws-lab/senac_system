@@ -21,10 +21,10 @@ document.addEventListener("DOMContentLoaded", function() {
                 formData.append('g-recaptcha-response', token);
 
                 // ✅ CORREÇÃO: Apontar para o servidor Node.js
-                const respostaBackend = await fetch("http://localhost:3000/login", {
+                const respostaBackend = await fetch("back2.js", {
                     method: "POST",
                     body: formData
-                });
+                }).then(result => result.json());
 
                 const resultado = await respostaBackend.json();
 
