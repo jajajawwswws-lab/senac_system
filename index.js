@@ -1,7 +1,8 @@
 document.addEventListener("DOMContentLoaded", function() {
-
+    
+    console.log('teste ts jjs');
     emailjs.init("U4YsBQw1w9fYHGgnL");
-
+    alert('two;');
     const form = document.getElementById('loginForm');
 
     form.addEventListener('submit', async function(e) {
@@ -71,3 +72,4 @@ function validarCampos(email, password) {
 
     return true;
 }
+console.log('teste ts jjs');
