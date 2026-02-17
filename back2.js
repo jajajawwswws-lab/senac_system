@@ -7,12 +7,12 @@ const cors = require('cors'); // 🔴 ADICIONE ISSO!
 const app = express();
 
 // 🔴 CONFIGURAÇÃO CORS - ESSENCIAL!
+
 app.use(cors({
-    origin: 'http://127.0.0.1:5500', // URL do seu frontend
+    origin: 'https://senac-system.vercel.app', // 🔴 A ORIGEM DO SEU FRONTEND NA VERCEL
     methods: ['POST', 'GET', 'OPTIONS'],
     credentials: true
 }));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
