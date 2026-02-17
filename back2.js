@@ -81,5 +81,5 @@ const PORT = process.env.PORT || 3000; // Mude o 3000 para qualquer número
 
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
-    console.log(`🔗 URL: http://localhost:${PORT}/login`);
+    console.log(`🔗 URL: https://localhost:${PORT}/login`);
 });
