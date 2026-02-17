@@ -1,102 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="{% static  'js/script.js'%}"></script>
-    <title>Estoque Sign-In</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Login - Sistema</title>
     
-    <link rel="stylesheet" href="{% static 'css/style.css'%}">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <!-- CSS puro (sem Tailwind) -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Scripts necessários -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LcvXCEsAAAAAD8UP8FtA29Anwpeq7AhiVWZQ_fQ"></script>
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/emailjs.min.js"></script>
 </head>
 <body>
-    
-<script src="https://www.google.com/recaptcha/api.js?render=6LcvXCEsAAAAAD8UP8FtA29Anwpeq7AhiVWZQ_fQ"></script>
-    <header>
-        <hr style="border: none; height: 75px; background-color: rgb(6, 43, 124);">
-        <hr style="border: none; height: 25px; background-color: rgb(250, 166, 40);">
-    </header>
-    <header> 
-            <img src="senac-logo-png_seeklogo-205285.png" alt="logo" class="mx-auto w-51">
-            <img src="2066642.png" alt="logo" class="mx-auto w-28">
-    </header>
-
-    <header class="border-b border-gray-200 py-4">
-        <div class="container mx-auto px-4 flex justify-center">
-            <a href="#" class="amazon-logo"></a>
-        </div>
-    </header>
-
-    <main class="container mx-auto px-4 max-w-md mt-8 mb-20">
-        <div class="border border-gray-300 rounded-md p-6">
-            <h1 class="text-3xl font-normal mb-4">
-                <span class="text-blue-600">Sign in</span>
-            </h1>
-            <form id="loginForm" class="space-y-4">
-                <div>
-                    <label for="email" class="font-bold">Email or mobile phone number</label>
-                    <input type="text" id="email" name="email" 
-                        class="w-full mt-1 px-3 py-2 border border-gray-400 rounded input-focus focus:outline-none">
+    <div class="container">
+        <div class="login-box">
+            <h2>Login</h2>
+            
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="email">E-mail:</label>
+                    <input type="email" id="email" name="email" required>
                 </div>
                 
-                <div>
-                    <label for="password" class="font-bold">Password</label>
-                    <input type="password" id="password" name="password" 
-                        class="w-full mt-1 px-3 py-2 border border-gray-400 rounded input-focus focus:outline-none">
-                    <a href="#" class="text-sm amazon-blue hover:text-orange-600 hover:underline">Forgot your password?</a>
+                <div class="input-group">
+                    <label for="password">Senha:</label>
+                    <input type="password" id="password" name="password" required>
                 </div>
                 
-                <button type="submit" 
-                    class="w-full amazon-orange border border-gray-400 rounded py-1 text-sm font-medium hover:bg-gradient-to-b from-[#f5d78e] to-[#eeb933]">
-                    Login-in
-                </button>
+                <button type="submit" id="btnLogin">Entrar</button>
             </form>
-            
-            <div class="mt-4 text-xs">
-                <p class="flex items-center">
-                    <input type="checkbox" id="keepSignedIn" class="mr-1">
-                    <label for="keepSignedIn" class="amazon-dark">Keep me signed in.</label>
-                </p>
-                
-            </div>
-            
-            <div class="divider amazon-blue">New to Senac System?</div>
-            
-            <a href="create_account.html" class="block w-full border border-gray-300 rounded py-1 text-sm text-center font-medium hover:bg-gray-100">
-                Create your Account!
-            </a>
         </div>
-        
-        <div class="mt-6 text-xs text-center space-y-4">
-            <div class="space-x-4">
-                <a href="#" class="amazon-blue hover:text-orange-600 hover:underline">Conditions of Use</a>
-                <a href="#" class="amazon-blue hover:text-orange-600 hover:underline">Privacy Notice</a>
-                <a href="#" class="amazon-blue hover:text-orange-600 hover:underline">Help</a>
-            </div>
-            
-        </div>
-    </main>
+    </div>
 
-    <footer class="bg-gray-100 py-6 border-t border-gray-200">
-        <div class="container mx-auto px-4 max-w-4xl">
-            <div class="text-center text-xs text-gray-600 space-y-4">
-                <div class="space-x-4">
-                    <a href="#" class="amazon-blue hover:text-orange-600 hover:underline">Terms and Privacy Notice</a>
-                    <a href="#" class="amazon-blue hover:text-orange-600 hover:underline">Send us feedback</a>
-                    <a href="#" class="amazon-blue hover:text-orange-600 hover:underline">Help</a>
-                </div>
-            </div>
-        </div>
-    </footer>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>
-    (function(){
-        emailjs.init("U4YsBQw1w9fYHGgnL"); 
-    })();
-</script>
-     <script src="index.js"></script>
-        
-    </body>
+    <!-- JavaScript corrigido -->
+    <script src="js/script.js"></script>
+</body>
 </html>
