@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     body: formData
                 });
                 const resultado = await respostaBackend.json();
-
+                console.log("Resultado Request: ",resultado);
                 if (!resultado.sucesso) {
                     alert("⚠ Erro no reCAPTCHA: " + resultado.erro);
                     return;
