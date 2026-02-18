@@ -1,10 +1,20 @@
-// api/verificar-recaptcha.js
+// api/backend.js
 export default async function handler(req, res) {
-    // ✅ SEMPRE definir header JSON
+    // ✅ IMPORTANTE: Configurar CORS e headers
     res.setHeader('Content-Type', 'application/json');
     
+    // Permitir requisições de qualquer origem (para teste)
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    // Responder preflight requests
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     try {
-        // Se não for POST
+        // ✅ VERIFICAR METHOD
         if (req.method !== 'POST') {
             return res.status(405).json({ 
                 sucesso: false, 
@@ -12,48 +22,56 @@ export default async function handler(req, res) {
             });
         }
 
-        const { recaptchaToken } = req.body;
+        // ✅ LOG PARA DEBUG
+        console.log('Body recebido:', req.body);
 
-        // Validar token
-        if (!recaptchaToken) {
-            return res.status(400).json({ 
-                sucesso: false, 
-                erro: 'Token não fornecido' 
+        const { nome, email, recaptchaToken } = req.body;
+
+        // ✅ VALIDAR CAMPOS
+        if (!nome || !email || !recaptchaToken) {
+            return res.status(400).json({
+                sucesso: false,
+                erro: 'Campos obrigatórios faltando',
+                detalhes: {
+                    nome: !nome,
+                    email: !email,
+                    recaptchaToken: !recaptchaToken
+                }
             });
         }
 
-        // Verificar com Google
-        const respostaGoogle = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+        // Verificar reCAPTCHA
+        const verifyRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-                secret: '6LcvXCEsAAAAALhdjN9brcMVR33i5aQwspMOWXv9',
+                secret: '6LcvXCEsAAAAALhdjN9brcMVR33i5aQspMOWXv9',
                 response: recaptchaToken
             })
         });
 
-        const dadosGoogle = await respostaGoogle.json();
+        const verifyData = await verifyRes.json();
+        console.log('Resposta do Google:', verifyData);
 
-        // ✅ Retorno SEMPRE em JSON
-        if (dadosGoogle.success) {
-            return res.status(200).json({
-                sucesso: true,
-                mensagem: 'reCAPTCHA válido!',
-                score: dadosGoogle.score || null
-            });
-        } else {
+        if (!verifyData.success) {
             return res.status(400).json({
                 sucesso: false,
                 erro: 'reCAPTCHA inválido',
-                codigos: dadosGoogle['error-codes']
+                detalhes: verifyData['error-codes']
             });
         }
 
+        // Sucesso!
+        return res.status(200).json({
+            sucesso: true,
+            mensagem: 'Formulário enviado com sucesso!',
+            dados: { nome, email }
+        });
+
     } catch (erro) {
-        // ✅ Mesmo erro é em JSON
-        console.error('Erro no servidor:', erro);
+        console.error('Erro no backend:', erro);
         return res.status(500).json({
             sucesso: false,
             erro: 'Erro interno',
