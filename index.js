@@ -1,68 +1,49 @@
-// index.js
-async function enviarFormulario(event) {
-    event.preventDefault();
+// index.js - Função de callback chamada pelo reCAPTCHA
+function onSubmit(token) {
+    console.log('Token recebido:', token);
     
-    // PEGAR O ELEMENTO RESULTADO
+    // Pegar dados do formulário
+    const nome = document.getElementById('nome').value;
+    const email = document.getElementById('email').value;
     const resultado = document.getElementById('resultado');
     
-    try {
-        resultado.textContent = '🔄 Enviando...';
-        
-        // VALIDAR CAMPOS
-        const nome = document.getElementById('nome').value;
-        const email = document.getElementById('email').value;
-        
-        if (!nome || !email) {
-            resultado.textContent = '❌ Preencha todos os campos';
-            return;
-        }
-        
-        // PEGAR TOKEN DO RECAPTCHA
-        const token = grecaptcha.getResponse();
-        
-        // ✅ CORRIGIDO: Mensagem de erro, NÃO a chave!
-        if (!token) {
-            resultado.textContent = '❌ Por favor, complete o reCAPTCHA';
-            return;
-        }
-
-        // CHAMAR API
-        const response = await fetch('api/backend', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                nome: nome,
-                email: email,
-                recaptchaToken: token
-            })
-        });
-
-        // VERIFICAR STATUS
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        // CONVERTER RESPOSTA
-        const dados = await response.json();
-        
-        // PROCESSAR RESULTADO
-        if (dados.sucesso) {
+    resultado.textContent = '🔄 Enviando...';
+    
+    // Preparar dados para enviar
+    const dados = {
+        nome: nome,
+        email: email,
+        recaptchaToken: token
+    };
+    
+    // Enviar para o backend
+    fetch('/api/backend', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.sucesso) {
             resultado.innerHTML = '✅ Enviado com sucesso!';
-            // LIMPAR CAMPOS
-            document.getElementById('nome').value = '';
-            document.getElementById('email').value = '';
-            grecaptcha.reset();
+            document.getElementById('loginForm').reset();
         } else {
-            resultado.innerHTML = '❌ Erro: ' + (dados.erro || 'Erro desconhecido');
+            resultado.innerHTML = '❌ Erro: ' + (data.erro || 'Erro desconhecido');
         }
-
-    } catch (erro) {
-        console.error('Erro completo:', erro);
-        resultado.innerHTML = '❌ Erro: ' + erro.message;
-    }
+    })
+    .catch(erro => {
+        console.error('Erro:', erro);
+        resultado.innerHTML = '❌ Erro de conexão: ' + erro.message;
+    });
 }
 
-// TORNAR FUNÇÃO GLOBAL
-window.enviarFormulario = enviarFormulario;
+// Tornar função global para ser acessível pelo reCAPTCHA
+window.onSubmit = onSubmit;
+
+// Prevenir envio padrão do formulário
+document.getElementById('loginForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    // O reCAPTCHA vai chamar onSubmit automaticamente
+});
