@@ -21,11 +21,10 @@ document.addEventListener("DOMContentLoaded", function() {
                 formData.append('g-recaptcha-response', token);
 
                 // ✅ CORREÇÃO: Apontar para o servidor Node.js
-                const respostaBackend =fetch("https://seu-backend.onrender.com/login", {
+                const respostaBackend = await fetch("/api/backend", {
                     method: "POST",
                     body: formData
                 }).then(result => result.json());
-
                 const resultado = await respostaBackend.json();
 
                 if (!resultado.sucesso) {
@@ -52,14 +51,11 @@ document.addEventListener("DOMContentLoaded", function() {
             } catch (erro) {
                 console.error("Erro:", erro);
                 alert("❌ Ocorreu um erro inesperado: " + erro.message);
+                resultado.textContent = "Erro: " + error.message;
             }
         });
     });
 });
-setTimeout(async () => 
-    {
-        await recaptcha.ready(async function())
-    }, 1000)
 function validarCampos(email, password) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
