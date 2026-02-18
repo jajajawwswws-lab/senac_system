@@ -27,7 +27,7 @@ async function enviarFormulario(event) {
         }
 
         // CHAMAR API
-        const response = await fetch('/api/backend', {
+        const response = await fetch('api/backend', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
