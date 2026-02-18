@@ -9,9 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="shortcut icon" href="favicon-32x32.png">
-    <!-- Google reCAPTCHA -->
-    <script src="https://www.google.com/recaptcha/api.js?render=6LcvXCEsAAAAAD8UP8FtA29Anwpeq7AhiVWZQ_fQ"></script>
+    <link rel="shortcut icon" href="favicon-32x32.png">
+    
+    <!-- ✅ CORREÇÃO 1: Carregar reCAPTCHA com a SITE KEY CORRETA (v2) -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     
     <!-- EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -147,6 +148,13 @@
             text-decoration: underline;
         }
         
+        /* ✅ CORREÇÃO 2: Estilo para o container do reCAPTCHA */
+        .recaptcha-container {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+        
         /* Botão de login */
         .btn-login {
             width: 100%;
@@ -174,6 +182,15 @@
         
         .checkbox {
             margin-right: 5px;
+        }
+        
+        /* ✅ CORREÇÃO 3: Estilo para mensagem de resultado */
+        #resultado {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
         }
         
         /* Divisor */
@@ -319,16 +336,23 @@
                     <span>Sign in</span>
                 </h1>
                 
-                <form id="loginForm" class="login-form">
+                <!-- ✅ CORREÇÃO 4: Adicionado onsubmit para chamar a função -->
+                <form id="loginForm" onsubmit="enviarFormulario(event)">
                     <div class="form-group">
-                        <label for="email" class="form-label">Email or mobile phone number</label>
-                        <input type="text" id="email" name="email" class="form-input">
+                        <label for="nome" class="form-label">Nome</label>
+                        <input type="text" id="nome" name="nome" class="form-input" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" id="password" name="password" class="form-input">
-                        <a href="forgot_password.html" class="link" style="display: inline-block; margin-top: 5px;">Forgot your password?</a>
+                        <label for="email" class="form-label">Email or mobile phone number</label>
+                        <input type="email" id="email" name="email" class="form-input" required>
+                    </div>
+                    
+                    <!-- ✅ CORREÇÃO 5: Adicionado reCAPTCHA com SITE KEY CORRETA -->
+                    <div class="recaptcha-container">
+                        <div class="g-recaptcha" 
+                             data-sitekey="6LcvXCEsAAAAAJ76jN9brcMVR33i5aQwspMOWXv9">
+                        </div>
                     </div>
                     
                     <button type="submit" class="btn-login">
@@ -340,6 +364,9 @@
                         <label for="keepSignedIn">Keep me signed in.</label>
                     </div>
                 </form>
+                
+                <!-- ✅ CORREÇÃO 6: Div para mostrar resultados -->
+                <div id="resultado"></div>
                 
                 <div class="divider">
                     <span>New to Senac System?</span>
@@ -372,7 +399,7 @@
         </div>
     </footer>
     
-    <script src="index.js">
-    </script>
+    <!-- ✅ CORREÇÃO 7: Carregar o index.js (remover o conteúdo entre as tags) -->
+    <script src="index.js"></script>
 </body>
 </html>
