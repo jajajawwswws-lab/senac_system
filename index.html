@@ -11,13 +11,12 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="shortcut icon" href="favicon-32x32.png">
     
-    <!-- ✅ CORREÇÃO 1: Carregar reCAPTCHA com a SITE KEY CORRETA (v2) -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <!-- Carregar reCAPTCHA v2 -->
+    <script src="https://www.google.com/recaptcha/api.js"></script>
+    
     <!-- EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-     <div class="g-recaptcha" 
-             data-sitekey="6LeJZ28sAAAAAMgcIEAe0vm2GHIKZUZRucVyeiYU">  <!-- ✅ ÚNICO LUGAR -->
-        </div>
+    
     <style>
         /* Reset e configurações básicas */
         * {
@@ -149,14 +148,14 @@
             text-decoration: underline;
         }
         
-        /* ✅ CORREÇÃO 2: Estilo para o container do reCAPTCHA */
+        /* Container do reCAPTCHA */
         .recaptcha-container {
             margin: 20px 0;
             display: flex;
             justify-content: center;
         }
         
-        /* Botão de login */
+        /* Botão de login com reCAPTCHA */
         .btn-login {
             width: 100%;
             background: linear-gradient(to bottom, #f7dfa5, #f0c14b);
@@ -173,6 +172,12 @@
             background: linear-gradient(to bottom, #f5d78e, #eeb933);
         }
         
+        /* Botão reCAPTCHA */
+        .g-recaptcha-button {
+            width: 100%;
+            margin: 15px 0;
+        }
+        
         /* Checkbox */
         .checkbox-container {
             display: flex;
@@ -185,7 +190,7 @@
             margin-right: 5px;
         }
         
-        /* ✅ CORREÇÃO 3: Estilo para mensagem de resultado */
+        /* Estilo para mensagem de resultado */
         #resultado {
             margin-top: 20px;
             padding: 10px;
@@ -337,8 +342,8 @@
                     <span>Sign in</span>
                 </h1>
                 
-                <!-- ✅ CORREÇÃO 4: Adicionado onsubmit para chamar a função -->
-                <form id="loginForm" onsubmit="enviarFormulario(event)">
+                <!-- Formulário com ID para referência -->
+                <form id="loginForm">
                     <div class="form-group">
                         <label for="nome" class="form-label">Nome</label>
                         <input type="text" id="nome" name="nome" class="form-input" required>
@@ -349,10 +354,11 @@
                         <input type="email" id="email" name="email" class="form-input" required>
                     </div>
                     
-                    <!-- ✅ CORREÇÃO 5: Adicionado reCAPTCHA com SITE KEY CORRETA -->
-                    
-                    
-                    <button type="submit" class="btn-login">
+                    <!-- Botão com reCAPTCHA integrado (modelo do Google) -->
+                    <button class="g-recaptcha btn-login" 
+                            data-sitekey="6LeJZ28sAAAAAMgcIEAe0vm2GHIKZUZRucVyeiYU" 
+                            data-callback='onSubmit' 
+                            data-action='submit'>
                         Login-in
                     </button>
                     
@@ -362,7 +368,7 @@
                     </div>
                 </form>
                 
-                <!-- ✅ CORREÇÃO 6: Div para mostrar resultados -->
+                <!-- Div para mostrar resultados -->
                 <div id="resultado"></div>
                 
                 <div class="divider">
@@ -396,7 +402,7 @@
         </div>
     </footer>
     
-    <!-- ✅ CORREÇÃO 7: Carregar o index.js (remover o conteúdo entre as tags) -->
+    <!-- Carregar index.js -->
     <script src="index.js"></script>
 </body>
 </html>
