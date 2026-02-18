@@ -13,10 +13,11 @@
     
     <!-- ✅ CORREÇÃO 1: Carregar reCAPTCHA com a SITE KEY CORRETA (v2) -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    
     <!-- EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    
+     <div class="g-recaptcha" 
+             data-sitekey="6LcvXCEsAAAAAD8UP8FtA29Anwpeq7AhiVWZQ_fQ">  <!-- ✅ ÚNICO LUGAR -->
+        </div>
     <style>
         /* Reset e configurações básicas */
         * {
@@ -349,11 +350,7 @@
                     </div>
                     
                     <!-- ✅ CORREÇÃO 5: Adicionado reCAPTCHA com SITE KEY CORRETA -->
-                    <div class="recaptcha-container">
-                        <div class="g-recaptcha" 
-                             data-sitekey="6LcvXCEsAAAAAD8UP8FtA29Anwpeq7AhiVWZQ_fQ">
-                        </div>
-                    </div>
+                    
                     
                     <button type="submit" class="btn-login">
                         Login-in
