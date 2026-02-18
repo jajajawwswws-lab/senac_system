@@ -2,46 +2,60 @@
 async function enviarFormulario(event) {
     event.preventDefault();
     
-    // ✅ PEGAR O ELEMENTO CORRETAMENTE
+    // PEGAR O ELEMENTO RESULTADO
     const resultado = document.getElementById('resultado');
     
     try {
         resultado.textContent = '🔄 Enviando...';
         
-        // Pegar token do reCAPTCHA
+        // VALIDAR CAMPOS
+        const nome = document.getElementById('nome').value;
+        const email = document.getElementById('email').value;
+        
+        if (!nome || !email) {
+            resultado.textContent = '❌ Preencha todos os campos';
+            return;
+        }
+        
+        // PEGAR TOKEN DO RECAPTCHA
         const token = grecaptcha.getResponse();
         
+        // ✅ CORRIGIDO: Mensagem de erro, NÃO a chave!
         if (!token) {
-            resultado.textContent = '6LcvXCEsAAAAAD8UP8FtA29Anwpeq7AhiVWZQ_fQ';
+            resultado.textContent = '❌ Por favor, complete o reCAPTCHA';
             return;
         }
 
-        // ✅ CHAMADA CORRETA PARA API
+        // CHAMAR API
         const response = await fetch('https://senac-system.vercel.app/api/backend', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                nome: document.getElementById('nome').value,
-                email: document.getElementById('email').value,
+                nome: nome,
+                email: email,
                 recaptchaToken: token
             })
         });
 
-        // ✅ VERIFICAR STATUS
+        // VERIFICAR STATUS
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // ✅ AWAIT no json()
+        // CONVERTER RESPOSTA
         const dados = await response.json();
         
+        // PROCESSAR RESULTADO
         if (dados.sucesso) {
             resultado.innerHTML = '✅ Enviado com sucesso!';
+            // LIMPAR CAMPOS
+            document.getElementById('nome').value = '';
+            document.getElementById('email').value = '';
             grecaptcha.reset();
         } else {
-            resultado.innerHTML = '❌ Erro: ' + dados.erro;
+            resultado.innerHTML = '❌ Erro: ' + (dados.erro || 'Erro desconhecido');
         }
 
     } catch (erro) {
@@ -50,5 +64,5 @@ async function enviarFormulario(event) {
     }
 }
 
-// ✅ DEFINIR A FUNÇÃO GLOBALMENTE
+// TORNAR FUNÇÃO GLOBAL
 window.enviarFormulario = enviarFormulario;
