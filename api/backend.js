@@ -47,7 +47,7 @@ export default async function handler(req, res) {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-                secret: '6LcvXCEsAAAAALhdjN9brcMVR33i5aQspMOWXv9',
+                secret: '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE',
                 response: recaptchaToken
             })
         });
