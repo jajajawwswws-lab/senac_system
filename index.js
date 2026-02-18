@@ -1,53 +1,54 @@
+// index.js
 async function enviarFormulario(event) {
     event.preventDefault();
     
+    // ✅ PEGAR O ELEMENTO CORRETAMENTE
+    const resultado = document.getElementById('resultado');
+    
     try {
+        resultado.textContent = '🔄 Enviando...';
+        
         // Pegar token do reCAPTCHA
         const token = grecaptcha.getResponse();
         
         if (!token) {
-            alert('Complete o reCAPTCHA');
+            resultado.textContent = '6LcvXCEsAAAAAD8UP8FtA29Anwpeq7AhiVWZQ_fQ';
             return;
         }
 
-        // ✅ CRIAR OBJETO JSON (NÃO FormData)
-        const dados = {
-            nome: document.getElementById('nome').value,
-            email: document.getElementById('email').value,
-            recaptchaToken: token
-        };
-
-        console.log('Enviando dados:', dados); // Debug
-
-        // ✅ ENVIAR COMO JSON
-        const response = await fetch('/api/backend', {
-            method: "POST",
+        // ✅ CHAMADA CORRETA PARA API
+        const response = await fetch('https://senac-system.vercel.app/api/backend', {
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/json' // 👈 ESSENCIAL!
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify(dados) // 👈 Converter para JSON string
+            body: JSON.stringify({
+                nome: document.getElementById('nome').value,
+                email: document.getElementById('email').value,
+                recaptchaToken: token
+            })
         });
 
-        // Verificar se a resposta é OK
+        // ✅ VERIFICAR STATUS
         if (!response.ok) {
-            const erroTexto = await response.text();
-            console.error('Resposta de erro:', erroTexto);
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const resultado = await response.json();
-        console.log('Resultado:', resultado);
-
-        if (!resultado.sucesso) {
-            alert('Erro: ' + resultado.erro);
-            return;
-        }
-
-        alert('✅ Sucesso!');
-        grecaptcha.reset();
+        // ✅ AWAIT no json()
+        const dados = await response.json();
         
+        if (dados.sucesso) {
+            resultado.innerHTML = '✅ Enviado com sucesso!';
+            grecaptcha.reset();
+        } else {
+            resultado.innerHTML = '❌ Erro: ' + dados.erro;
+        }
+
     } catch (erro) {
         console.error('Erro completo:', erro);
-        alert('Erro: ' + erro.message);
+        resultado.innerHTML = '❌ Erro: ' + erro.message;
     }
 }
+
+// ✅ DEFINIR A FUNÇÃO GLOBALMENTE
+window.enviarFormulario = enviarFormulario;
