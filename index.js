@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 formData.append('g-recaptcha-response', token);
 
                 // ✅ CORREÇÃO: Apontar para o servidor Node.js
-                const respostaBackend = await fetch("/api/backend", {
+                const respostaBackend = await fetch('https://senac-system.vercel.app/api/backend', {
                     method: "POST",
                     body: formData
                 }).then(result => result.json());
