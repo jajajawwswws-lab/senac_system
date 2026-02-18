@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 const respostaBackend = await fetch('https://senac-system.vercel.app/api/backend', {
                     method: "POST",
                     body: formData
-                }).then(result => result.json());
+                });
                 const resultado = await respostaBackend.json();
 
                 if (!resultado.sucesso) {
