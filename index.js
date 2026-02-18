@@ -26,6 +26,15 @@ document.addEventListener("DOMContentLoaded", function() {
                     body: formData
                 });
                 const resultado = await respostaBackend.json();
+                console.log("Resultado COMPLETO:", resultado); // 👈 Veja TODO o objeto
+                console.log("sucesso:", resultado.sucesso);
+                console.log("erro:", resultado.erro);
+
+                if (!resultado.sucesso) {
+                    alert("⚠ Erro no reCAPTCHA: " + resultado.erro);
+                    console.log("Detalhes completos do erro:", resultado);
+                return;
+                }
                 console.log("Resultado Request: ",resultado);
                 if (!resultado.sucesso) {
                     alert("⚠ Erro no reCAPTCHA: " + resultado.erro);
