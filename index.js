@@ -1,68 +1,66 @@
-// index.js
-async function enviarFormulario(event) {
-    event.preventDefault();
-    
-    // PEGAR O ELEMENTO RESULTADO
-    const resultado = document.getElementById('resultado');
-    
-    try {
-        resultado.textContent = '🔄 Enviando...';
-        
-        // VALIDAR CAMPOS
-        const nome = document.getElementById('nome').value;
-        const email = document.getElementById('email').value;
-        
-        if (!nome || !email) {
-            resultado.textContent = '❌ Preencha todos os campos';
-            return;
-        }
-        
-        // PEGAR TOKEN DO RECAPTCHA
-        const token = grecaptcha.getResponse();
-        
-        // ✅ CORRIGIDO: Mensagem de erro, NÃO a chave!
-        if (!token) {
-            resultado.textContent = '❌ Por favor, complete o reCAPTCHA';
-            return;
-        }
+document.addEventListener("DOMContentLoaded", function() {
 
-        // CHAMAR API
-        const response = await fetch('https://senac-system.vercel.app/api/backend', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                nome: nome,
-                email: email,
-                recaptchaToken: token
-            })
+    emailjs.init("U4YsBQw1w9fYHGgnL");
+
+    const form = document.getElementById('loginForm');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+
+        if (!validarCampos(email, password)) return;
+
+        grecaptcha.ready(async function() {
+            try {
+                const token = await grecaptcha.execute('6LcvXCEsAAAAAD8UP8FtA29Anwpeq7AhiVWZQ_fQ', { action: 'submit' });
+
+                const formData = new FormData(form);
+                formData.append('g-recaptcha-response', token);
+
+                const respostaBackend = await fetch("https://senac-system.vercel.app/api/backend", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const resultado = await respostaBackend.json();
+
+                if (!resultado.sucesso) {
+                    alert("⚠ Erro no reCAPTCHA: " + resultado.erro);
+                    return;
+                }
+
+                // Agora sim envia email
+                await emailjs.send(
+                    "service_woaqqdh",
+                    "template_tg9sqd3",
+                    { user_email: email }
+                );
+
+                alert("✅ Login validado! Score Google: " + resultado.score);
+                window.location.href = "account.html";
+
+            } catch (erro) {
+                console.error("Erro:", erro);
+                alert(" Ocorreu um erro inesperado." + erro.message);
+            }
         });
+    });
+});
 
-        // VERIFICAR STATUS
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+function validarCampos(email, password) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        // CONVERTER RESPOSTA
-        const dados = await response.json();
-        
-        // PROCESSAR RESULTADO
-        if (dados.sucesso) {
-            resultado.innerHTML = '✅ Enviado com sucesso!';
-            // LIMPAR CAMPOS
-            document.getElementById('nome').value = '';
-            document.getElementById('email').value = '';
-            grecaptcha.reset();
-        } else {
-            resultado.innerHTML = '❌ Erro: ' + (dados.erro || 'Erro desconhecido');
-        }
-
-    } catch (erro) {
-        console.error('Erro completo:', erro);
-        resultado.innerHTML = '❌ Erro: ' + erro.message;
+    if (!emailRegex.test(email)) {
+        alert("Digite um e-mail válido.");
+        return false;
     }
-}
 
-// TORNAR FUNÇÃO GLOBAL
-window.enviarFormulario = enviarFormulario;
+    if (password.length < 6) {
+        alert("A senha deve ter pelo menos 6 caracteres.");
+        return false;
+    }
+
+    return true;
+}
