@@ -3,16 +3,16 @@ function onSubmit(token) {
     console.log('Token recebido:', token);
     
     // Pegar dados do formulário
-    const nome = document.getElementById('nome').value;
+    //const nome = document.getElementById('nome').value;
     const email = document.getElementById('email').value;
     const resultado = document.getElementById('resultado');
-    
+    const password = document.getElementById('password').value.trim();
     resultado.textContent = '🔄 Enviando...';
     
     // Preparar dados para enviar
     const dados = {
-        nome: nome,
         email: email,
+        password: password,
         recaptchaToken: token
     };
     
@@ -47,3 +47,20 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
     event.preventDefault();
     // O reCAPTCHA vai chamar onSubmit automaticamente
 });
+
+function validadeCampos(password,email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!emailRegex.test(email))
+        {
+            alert("Digite um e-mail valido");
+            return false;
+        }
+    if(password.length < 9)
+        {
+            alert("Deve pelo menos conter 9 caracteres. ");
+            return false;
+        }
+    password.length
+        return true;
+        
+}
