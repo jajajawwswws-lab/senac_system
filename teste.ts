@@ -1,15 +1,9 @@
-import { exibirNome } from './exibirNome.ts';
-import { exibirPonto } from './exibirPonto.ts';
-
-interface Nomeada {
-    nome: string;
+interface Registro{
+    id: number;
+    gmail: string;
+    phone: number;
+    password: string;
+    password_require_again: string;
 }
 
-const obj = {
-    x: 0,
-    y: 0,
-    nome: 'Origem'
-};
-
-exibirPonto(obj);
-exibirNome(obj);
+console.log("working");
