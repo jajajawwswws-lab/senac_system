@@ -64,3 +64,19 @@ function validadeCampos(password,email) {
         return true;
         
 }
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault(); // impede envio padrão do formulário
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    // Checagem básica (simulação)
+    if(email === "admin@gmail.com" && password === "zxcvbnm123!@#") {
+        // Redireciona para o dashboard
+        window.location.href = "account.html";
+    } else {
+        const resultado = document.getElementById('resultado');
+        resultado.textContent = "E-mail ou senha incorretos!";
+        resultado.style.color = "red";
+    }
+});
