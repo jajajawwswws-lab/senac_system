@@ -71,7 +71,7 @@ function onSubmit(token) {
 
     if(email === "admin@gmail.com" && password === "zxcvbnm123!@#") {
         // Redireciona para dashboard
-        window.location.href = "dashboard.html";
+        window.location.href = "account.html";
     } else {
         const resultado = document.getElementById('resultado');
         resultado.textContent = "E-mail ou senha incorretos!";
