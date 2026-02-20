@@ -1,19 +1,16 @@
-interface Registro{
-    id: number;
-    username: string;
-    phone: number;
+interface Registro {
+    // Adicione as propriedades que você precisa
+    nome: string;
     email: string;
+    senha: string;
+    // ... outras propriedades
 }
-console.log("working...");
-//import express, {Express, Request, Response} from "express";
-//import session from "express-session";
-//const express = require('express');
-//const session = require('express-session');
-//const fetch = require('node-fetch');
-//const cors = require('cors');
 
-//const app = express();
-//const port = 3000;
+// Agora USE a interface em algum lugar
+function criarRegistro(dados: Registro) {
+    console.log('Criando registro:', dados);
+}
 
-//app.get('/', (req, res) => res.send('Hello World!'));
-//app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+// Ou exporte se for usar em outros arquivos
+export type { Registro };
+export type { criarRegistro };
