@@ -48,8 +48,9 @@ async function ServerRequest(request: IncomingMessage, response: ServerResponse)
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
+                //6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE
                 body: new URLSearchParams({
-                    secret: '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE',
+                    secret: '6Lblabla',
                     response: recaptchaToken
                 })
             }
