@@ -1,81 +1,92 @@
-// index.js - Função de callback chamada pelo reCAPTCHA
+// ===============================
+// Validação de campos
+// ===============================
+function validarCampos(email, password) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+        alert("Digite um e-mail válido.");
+        return false;
+    }
+
+    if (password.length < 9) {
+        alert("A senha deve conter pelo menos 9 caracteres.");
+        return false;
+    }
+
+    return true;
+}
+
+
+// ===============================
+// Callback chamado pelo reCAPTCHA
+// ===============================
 function onSubmit(token) {
-    console.log('Token recebido:', token);
-    
-    // Pegar dados do formulário
-    //const nome = document.getElementById('nome').value;
-    const email = document.getElementById('email').value;
-    const resultado = document.getElementById('resultado');
+
+    const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
-    resultado.textContent = '🔄 Enviando...';
-    
-    // Preparar dados para enviar
-    const dados = {
-        email: email,
-        password: password,
-        recaptchaToken: token
-    };
-    
+    const resultado = document.getElementById('resultado');
+
+    // Validação antes de enviar
+    if (!validarCampos(email, password)) {
+        return;
+    }
+
+    resultado.style.color = "black";
+    resultado.textContent = "🔄 Verificando...";
+
     // Enviar para o backend
     fetch('/api/backend', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(dados)
+        body: JSON.stringify({
+            email: email,
+            password: password,
+            recaptchaToken: token
+        })
     })
     .then(response => response.json())
     .then(data => {
-        if (data.sucesso) {
-            resultado.innerHTML = '✅ Enviado com sucesso!';
-            document.getElementById('loginForm').reset();
+
+        console.log("Resposta do backend:", data);
+
+        if (data.success) {
+
+            resultado.style.color = "green";
+            resultado.textContent = "✅ Login realizado com sucesso!";
+
+            // Redirecionar após 1 segundo
+            setTimeout(() => {
+                window.location.href = "account.html";
+            }, 1000);
+
         } else {
-            resultado.innerHTML = '❌ Erro: ' + (data.erro || 'Erro desconhecido');
+
+            resultado.style.color = "red";
+            resultado.textContent = data.error || "E-mail ou senha incorretos!";
         }
     })
-    .catch(erro => {
-        console.error('Erro:', erro);
-        resultado.innerHTML = '❌ Erro de conexão: ' + erro.message;
+    .catch(error => {
+        console.error("Erro:", error);
+        resultado.style.color = "red";
+        resultado.textContent = "❌ Erro de conexão com o servidor.";
     });
 }
 
-// Tornar função global para ser acessível pelo reCAPTCHA
+
+// ===============================
+// Tornar função global para o reCAPTCHA
+// ===============================
 window.onSubmit = onSubmit;
 
-// Prevenir envio padrão do formulário
-document.getElementById('loginForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    // O reCAPTCHA vai chamar onSubmit automaticamente
+
+// ===============================
+// Impedir envio padrão do formulário
+// ===============================
+document.getElementById('loginForm')
+    .addEventListener('submit', function(event) {
+        event.preventDefault();
+        // O reCAPTCHA irá chamar onSubmit automaticamente
 });
-
-function validadeCampos(password,email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if(!emailRegex.test(email))
-        {
-            alert("Digite um e-mail valido");
-            return false;
-        }
-    if(password.length < 9)
-        {
-            alert("Deve pelo menos conter 9 caracteres. ");
-            return false;
-        }
-    password.length
-        return true;
-        
-}
-// Função callback do reCAPTCHA
-function onSubmit(token) {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    if(email === "admin@gmail.com" && password === "zxcvbnm123!@#") {
-        // Redireciona para dashboard
-        window.location.href = "account.html";
-    } else {
-        const resultado = document.getElementById('resultado');
-        resultado.textContent = "E-mail ou senha incorretos!";
-        resultado.style.color = "red";
-    }
-}
-
