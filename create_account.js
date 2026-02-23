@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorMessage += 'Please try again.';
                 }
                 
-                alert('❌ ' + errorMessage);
+                alert('❌ j j jkk ' + errorMessage);
                 
                 // Reativar botão
                 submitButton.disabled = false;
