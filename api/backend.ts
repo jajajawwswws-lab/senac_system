@@ -76,14 +76,14 @@ async function ServerRequest(
                 }));
                 return;
             }
-if (email !== "senac@gmail.com" || password !== "senacoficialmnbvcxz321#@!") {
-    response.statusCode = 401;
-    response.end(JSON.stringify({
-        success: false,
-        error: "Credenciais inválidas"
-    }));
-    return;
-}
+            if (email !== "senac@gmail.com" || password !== "senacoficialmnbvcxz321#@!") {
+                response.statusCode = 401;
+                response.end(JSON.stringify({
+                    success: false,
+                    error: "Credenciais inválidas"
+                }));
+                return;
+            }
             response.statusCode = 200;
             response.end(JSON.stringify({
                 success: true,
