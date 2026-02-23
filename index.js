@@ -65,7 +65,7 @@ function onSubmit(token) {
         } else {
 
             resultado.style.color = "red";
-            resultado.textContent = data.error || "E-mail ou senha incorretos!";
+            resultado.textContent = data.error || "E-mail ou senha incorretos!!!";
         }
     })
     .catch(error => {
