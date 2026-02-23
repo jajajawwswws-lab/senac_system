@@ -24,9 +24,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         grecaptcha.ready(async function(){
             
-                const token = await grecaptcha.execute('6LcvXCEsAAAAALhdjN9brcMVR33i5aQwspMOWXv9', { action: 'submit' });
+                const token = await grecaptcha.execute('6LeJZ28sAAAAAMgcIEAe0vm2GHIKZUZRucVyeiYU', { action: 'submit' });
                 formData.append('g-recaptcha-response', token);
-                const respostaBackend = await fetch("create_account.php",{
+                const respostaBackend = await fetch("/api/create_account",{
                     method: "POST",
                     body: formData
                 });
@@ -368,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Executando reCAPTCHA...');
                 
                 // Executar reCAPTCHA
-                const token = await grecaptcha.execute('6LcvXCEsAAAAAD8UP8FtA29Anwpeq7AhiVWZQ_fQ', {action: 'register'});
+                const token = await grecaptcha.execute('6LeJZ28sAAAAAMgcIEAe0vm2GHIKZUZRucVyeiYU', {action: 'register'});
                 console.log('reCAPTCHA token obtido');
                 
                 // Coletar dados do formulário
@@ -428,10 +428,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (error.message.includes('reCAPTCHA')) {
                     errorMessage += 'Please verify you are not a robot.';
                 } else {
-                    errorMessage += 'Please try againss kklm.';
+                    errorMessage += 'Please try again.';
                 }
                 
-                alert('❌ j j jkk ' + errorMessage);
+                alert('❌ ' + errorMessage);
                 
                 // Reativar botão
                 submitButton.disabled = false;
