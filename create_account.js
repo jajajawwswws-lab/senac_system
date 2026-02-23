@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordMatchMessage = document.getElementById('passwordMatchMessage');
     const submitButton = document.getElementById('submitButton');
 
-
+//s
     form.addEventListener('submit', async function(e){
         e.preventDefault();
 
