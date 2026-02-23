@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (error.message.includes('reCAPTCHA')) {
                     errorMessage += 'Please verify you are not a robot.';
                 } else {
-                    errorMessage += 'Please try again.';
+                    errorMessage += 'Please try againss kklm.';
                 }
                 
                 alert('❌ j j jkk ' + errorMessage);
