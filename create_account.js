@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
                 const token = await grecaptcha.execute('6LeJZ28sAAAAAMgcIEAe0vm2GHIKZUZRucVyeiYU', { action: 'submit' });
                 formData.append('g-recaptcha-response', token);
-                const respostaBackend = await fetch("/api/create_account",{
+                const respostaBackend = await fetch("/api/backend",{
                     method: "POST",
                     body: formData
                 });
