@@ -1,6 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-console.log("working...");
+//"use strict";
+
+
+//Object.defineProperty(exports, "__esModule", { value: true });
+//console.log("working...");
 //import express, {Express, Request, Response} from "express";
 //import session from "express-session";
 //const express = require('express');
