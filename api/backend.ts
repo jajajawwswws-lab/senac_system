@@ -6,7 +6,6 @@ interface Registro {
     email: string;
     recaptchaToken: string;
 }
-
 async function ServerRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
     response.setHeader('Content-Type', 'application/json');
     response.setHeader('Access-Control-Allow-Origin', '*');
@@ -28,48 +27,23 @@ async function ServerRequest(request: IncomingMessage, response: ServerResponse)
             error: 'Método não permitido no sistema'
         }));
         return;
-    }
-
+    }request.on('end', async () => {
     try {
-        // Coletar o body da requisição
-        let body = '';
-        request.on('data', (chunk) => {
-            body += chunk.toString();
-        });
+        const data = JSON.parse(body) as Registro;
+        const { nome, email, recaptchaToken } = data;
 
-        request.on('end', async () => {
-            try {
-                // Parsear o body como Registro
-                const data = JSON.parse(body) as Registro;
-                console.log('Body recebido:', data);
+        if (!nome || !email || !recaptchaToken) {
+            response.statusCode = 400;
+            response.end(JSON.stringify({
+                success: false,
+                error: 'Campos obrigatórios faltando'
+            }));
+            return;
+        }
 
-                // Usar os dados tipados
-                const { nome, email, recaptchaToken } = data;
-                console.log('Nome:', nome);
-                console.log('Email:', email);
-                console.log('Token:', recaptchaToken);
-
-                // Resposta de sucesso
-                response.end(JSON.stringify({
-                    success: true,
-                    message: "teste connection",
-                    data: { nome, email }
-                }));
-                if(!nome || !email || !recaptchaToken)
-                    {
-                        request.statusCode = 400;
-                        (JSON.stringify({
-                            sucess: false,
-                            error: 'Metodo nao permitido no sistema'     ,
-                            details: {
-                            nome: !nome,
-                            email: !email,
-                        
-                            recaptchaToken: !recaptchaToken
-                        }     
-                    }));
-                }    
-                const verifyAPI = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+        const verifyAPI = await fetch(
+            'https://www.google.com/recaptcha/api/siteverify',
+            {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -78,51 +52,35 @@ async function ServerRequest(request: IncomingMessage, response: ServerResponse)
                     secret: '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE',
                     response: recaptchaToken
                 })
-                });
-                const verifyDataAPI = await verifyAPI.json();
-                console.log('Resposta do Google:', verifyDataAPI);
-                
-                if(!verifyDataAPI)
-                    {  
-                        response.statusCode = 400;
-                        response.end(JSON.stringify({
-                        sucess: false,
-                        error: 'reCAPTCHA invalido',
-                        details: verifyDataAPI
-                    }));
-                    return;
-                }
-
-                request.statusCode = 200;
-                response.end(JSON.stringify({
-                    sucess: true,
-                    mensage: 'Formulario enviado com sucesso!',
-                    dados: { nome, email }
-                }));
-                
-
-                console.log('reCAPTCHA valido!');
-                    
-            } catch (parseError) {
-                response.statusCode = 400;
-                response.end(JSON.stringify({
-                    success: false,
-                    error: 'JSON inválido'
-                }));
             }
-        });
-        
-        
-      
+        );
+
+        const verifyDataAPI = await verifyAPI.json();
+
+        if (!verifyDataAPI.success) {
+            response.statusCode = 400;
+            response.end(JSON.stringify({
+                success: false,
+                error: 'reCAPTCHA inválido'
+            }));
+            return;
+        }
+
+        response.statusCode = 200;
+        response.end(JSON.stringify({
+            success: true,
+            message: 'Formulário enviado com sucesso!',
+            dados: { nome, email }
+        }));
+
     } catch (error) {
-        console.error('Erro no backend: TSC module', error);
-        response.statusCode = 500;
+        response.statusCode = 400;
         response.end(JSON.stringify({
             success: false,
-            error: 'Erro interno catch'
+            error: 'JSON inválido'
         }));
     }
-}
+});
 
 async function Handler(req: Registro, res: Registro): Promise<string> {
     return `User ${req.nome} and ${res.email}`;
