@@ -76,7 +76,7 @@ async function ServerRequest(
                 }));
                 return;
             }
-if (email !== "admin@gmail.com" || password !== "zxcvbnm123!@#") {
+if (email !== "senac@gmail.com" || password !== "senacoficialmnbvcxz321#@!") {
     response.statusCode = 401;
     response.end(JSON.stringify({
         success: false,
