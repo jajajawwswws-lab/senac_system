@@ -146,6 +146,5 @@ async function ServerRequest(request: IncomingMessage, response: ServerResponse)
 // async function Handler(req: any, res: any): Promise<string> {
 //     return `User ${req.nome} and ${res.email}`;
 // }
-
-export { ServerRequest };
+export default ServerRequest;
 // export type { Handler };
