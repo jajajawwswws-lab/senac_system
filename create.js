@@ -19,11 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 🔑 CHAVE DO SITE reCAPTCHA
     const RECAPTCHA_SITE_KEY = '6LeJZ28sAAAAAMgcIEAe0vm2GHIKZUZRucVyeiYU';
     
-    // 🌐 URL da API (automática: local ou produção)
-    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:3001/api/crtback'
-        : 'https://senac-system.vercel.app/api/crtback';
-
+    const API_URL = 'https://senac-system.vercel.app/api/crtback';
     // Validação em tempo real
     let isFormValid = {
         username: false,
