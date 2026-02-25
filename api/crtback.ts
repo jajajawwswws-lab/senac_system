@@ -5,7 +5,7 @@ import path from "path";
 // Carrega variáveis de ambiente
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
+const RECAPTCHA_SECRET = '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE'
 
 if (!RECAPTCHA_SECRET) {
     console.error('❌ RECAPTCHA_SECRET não configurada no .env');
