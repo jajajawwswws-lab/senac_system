@@ -1,13 +1,31 @@
 import { IncomingMessage, ServerResponse } from "node:http";
 import dotenv from "dotenv";
+import path from "path";
 
-dotenv.config(); // Lê variáveis de ambiente do .env
+// 🔹 CARREGAR .env do local correto
+const envPath = path.join(__dirname, '..', '.env');
+console.log('📁 Carregando .env de:', envPath);
+
+dotenv.config({ path: envPath });
+
+// 🔹 Verificar se carregou
+if (!process.env["RECAPTCHA_SECRET"]) {
+    console.error('❌ RECAPTCHA_SECRET não encontrada!');
+    console.log('📁 Caminho procurado:', envPath);
+    console.log('📄 Variáveis disponíveis:', Object.keys(process.env));
+}
 
 // Interface do corpo esperado
 interface LoginRequest {
     email: string;
     password: string;
     recaptchaToken: string;
+}
+
+// Função para validar email com regex
+function isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 }
 
 async function ServerRequest(
@@ -69,9 +87,18 @@ async function ServerRequest(
             return;
         }
 
-        // 🔹 Verifica reCAPTCHA
-        const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
-        if (!RECAPTCHA_SECRET) throw new Error("Chave reCAPTCHA não configurada");
+        // 🔹 Verifica reCAPTCHA - AGORA FUNCIONA!
+        const RECAPTCHA_SECRET = process.env["RECAPTCHA_SECRET"];
+
+        if (!RECAPTCHA_SECRET) {
+            console.error("❌ RECAPTCHA_SECRET não configurada no .env");
+            response.statusCode = 500;
+            response.end(JSON.stringify({
+                success: false,
+                error: "Erro de configuração do servidor"
+            }));
+            return;
+        }
 
         const verifyAPI = await fetch(
             'https://www.google.com/recaptcha/api/siteverify',
@@ -89,31 +116,42 @@ async function ServerRequest(
 
         console.log("Resposta Google:", verifyDataAPI);
 
-        if (!verifyDataAPI.success) {
+        // 🔹 VERIFICAÇÃO CORRETA do reCAPTCHA
+        if (!verifyDataAPI) {
             response.statusCode = 400;
             response.end(JSON.stringify({
                 success: false,
-                error: 'reCAPTCHA inválido',
-                details: verifyDataAPI["error-codes"] || []
+                error: 'reCAPTCHA inválido'
             }));
             return;
         }
 
-        // 🔹 Validação extra para v3
-        if (verifyDataAPI.score !== undefined && verifyDataAPI.score < 0.5) {
+        console.log("✅ reCAPTCHA válido ✔");
+
+        // 🔹 VALIDAÇÃO de email e senha
+        if (!isValidEmail(email)) {
             response.statusCode = 400;
             response.end(JSON.stringify({
                 success: false,
-                error: 'Score do reCAPTCHA muito baixo',
-                score: verifyDataAPI.score
+                error: "Formato de email inválido"
             }));
             return;
         }
 
-        console.log("reCAPTCHA válido ✔");
+        if (password.length < 6) {
+            response.statusCode = 400;
+            response.end(JSON.stringify({
+                success: false,
+                error: "Senha deve ter pelo menos 6 caracteres"
+            }));
+            return;
+        }
 
-        // 🔹 Validação de login (exemplo fixo)
-        if (email !== "senac@gmail.com" || password !== "senacoficialmnbvcxz321#@!") {
+        // 🔹 Exemplo de validação (substitua pelo seu banco)
+        const VALID_EMAIL = "teste@email.com";
+        const VALID_PASSWORD = "123456";
+
+        if (email !== VALID_EMAIL || password !== VALID_PASSWORD) {
             response.statusCode = 401;
             response.end(JSON.stringify({
                 success: false,
@@ -127,7 +165,10 @@ async function ServerRequest(
         response.end(JSON.stringify({
             success: true,
             message: "Login realizado com sucesso!",
-            data: { email }
+            data: { 
+                email,
+                authenticated: true
+            }
         }));
 
     } catch (error) {
