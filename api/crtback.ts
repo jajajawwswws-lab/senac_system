@@ -26,7 +26,7 @@ async function ServerRequest(
     }
 
     // Apenas POST
-    if (request.method !== 'POST') {
+    if (request.method !== 'POST' && request.method !== 'GET') {
         response.statusCode = 405;
         response.end(JSON.stringify({
             success: false,
