@@ -259,63 +259,68 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ENVIO DO FORMULÁRIO
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
+   // ENVIO DO FORMULÁRIO
+form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!submitButton.disabled) {
+        // Desabilitar botão
+        submitButton.disabled = true;
+        const originalText = submitButton.textContent;
+        submitButton.textContent = 'Creating account...';
+        submitButton.style.backgroundColor = '#9CA3AF';
         
-        if (!submitButton.disabled) {
-            // Desabilitar botão
-            submitButton.disabled = true;
-            const originalText = submitButton.textContent;
-            submitButton.textContent = 'Creating account...';
-            submitButton.style.backgroundColor = '#9CA3AF';
+        try {
+            if (typeof grecaptcha === 'undefined') {
+                throw new Error('reCAPTCHA não carregado');
+            }
             
-            try {
-                if (typeof grecaptcha === 'undefined') {
-                    throw new Error('reCAPTCHA não carregado');
-                }
-                
-                // Executar reCAPTCHA
-                const token = await grecaptcha.execute(RECAPTCHA_SITE_KEY, {action: 'register'});
-                
-                // Criar FormData
-                const formData = new FormData(form);
-                formData.append('g-recaptcha-response', token);
-                
-                // Enviar para o backend
-                const respostaBackend = await fetch("/api/crtback", {
-                    method: "POST",
-                    body: formData
-                });
+            // Executar reCAPTCHA
+            const token = await grecaptcha.execute(RECAPTCHA_SITE_KEY, {action: 'register'});
+            
+            // Enviar para o backend em JSON
+            const respostaBackend = await fetch("https://senac-system.vercel.app/api/crtback", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    username: usernameInput.value,
+                    email: emailInput.value,
+                    phone: phoneInput.value,
+                    password: passwordInput.value,
+                    recaptchaToken: token
+                })
+            });
 
-                const resultado = await respostaBackend.json();
+            const resultado = await respostaBackend.json();
 
-                if (!resultado.sucesso) {
-                    alert("⚠ Erro no reCAPTCHA: " + resultado.erro);
-                    submitButton.disabled = false;
-                    submitButton.textContent = originalText;
-                    updateSubmitButton();
-                    return;
-                }
-                
-                // Sucesso!
-                alert("✅ Conta criada com sucesso!");
-                form.reset();
-                window.location.href = "index.html";
-                
-            } catch (error) {
-                console.error('Erro:', error); // ÚNICO LOG MANTIDO!
-                
-                alert('❌ Erro ao criar conta. Tente novamente.');
-                
+            if (!resultado.success) {
+                alert("⚠ Erro no reCAPTCHA ou dados: " + (resultado.error || "Erro desconhecido"));
                 submitButton.disabled = false;
                 submitButton.textContent = originalText;
                 updateSubmitButton();
+                return;
             }
-        } else {
-            alert('Please fill all required fields correctly.');
+            
+            // Sucesso!
+            alert("✅ Conta criada com sucesso!");
+            form.reset();
+            window.location.href = "index.html";
+            
+        } catch (error) {
+            console.error('Erro:', error); // ÚNICO LOG MANTIDO!
+            
+            alert('❌ Erro ao criar conta. Tente novamente.');
+            
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+            updateSubmitButton();
         }
-    });
-
+    } else {
+        alert('Please fill all required fields correctly.');
+    }
+});
     // Validação inicial silenciosa
     setTimeout(() => {
         usernameInput.dispatchEvent(new Event('input'));
