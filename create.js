@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('g-recaptcha-response', token);
                 
                 // Enviar para o backend
-                const respostaBackend = await fetch("/api/backend", {
+                const respostaBackend = await fetch("/api/crtback", {
                     method: "POST",
                     body: formData
                 });
