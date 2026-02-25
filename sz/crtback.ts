@@ -1,40 +1,37 @@
 import { IncomingMessage, ServerResponse } from "node:http";
-//import proxy from "./proxy";
-import { clerkMiddleware } from "@clerk/nextjs/server";
-//import dotenv from "dotenv";
+import dotenv from "dotenv";
+import path from "path";
 
-//dotenv.config(); // Lê variáveis de ambiente do .env
+// Carrega variáveis de ambiente
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
 
+if (!RECAPTCHA_SECRET) {
+    console.error('❌ RECAPTCHA_SECRET não configurada no .env');
+}
 
-clerkMiddleware();
-// Interface do corpo esperado
 interface LoginRequest {
     email: string;
     password: string;
     recaptchaToken: string;
 }
 
-async function ServerRequest(
-    request: IncomingMessage,
-    response: ServerResponse
-): Promise<void> {
-
-    // 🔹 Headers CORS
+async function ServerRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    // CORS headers
     response.setHeader('Content-Type', 'application/json');
     response.setHeader('Access-Control-Allow-Origin', '*');
     response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-
-    // 🔹 Preflight
+    // Preflight
     if (request.method === 'OPTIONS') {
         response.statusCode = 200;
         response.end();
         return;
     }
 
-    // 🔹 Apenas POST permitido
+    // Apenas POST
     if (request.method !== 'POST') {
         response.statusCode = 405;
         response.end(JSON.stringify({
@@ -45,27 +42,20 @@ async function ServerRequest(
     }
 
     try {
-        // 🔹 Coleta do body
+        // Coleta body
         let body = '';
-
-        await new Promise<void>((resolve, reject) => {
-            request.on('data', chunk => { body += chunk.toString(); });
-            request.on('end', () => resolve());
-            request.on('error', err => reject(err));
+        const bodyData = await new Promise<string>((resolve, reject) => {
+            request.on('data', (chunk) => { body += chunk.toString(); });
+            request.on('end', () => resolve(body));
+            request.on('error', (err) => reject(err));
         });
 
-        // 🔹 Parse JSON
-        const data: LoginRequest = JSON.parse(body);
-
+        const data: LoginRequest = JSON.parse(bodyData);
         const { email, password, recaptchaToken } = data;
 
-        console.log("Body recebido:", {
-            email,
-            password: password ? "[PRESENT]" : "[MISSING]",
-            token: recaptchaToken ? "[PRESENT]" : "[MISSING]"
-        });
+        console.log('📧 Email:', email);
 
-        // 🔹 Campos obrigatórios
+        // Valida campos obrigatórios
         if (!email || !password || !recaptchaToken) {
             response.statusCode = 400;
             response.end(JSON.stringify({
@@ -75,53 +65,39 @@ async function ServerRequest(
             return;
         }
 
-        // 🔹 Verifica reCAPTCHA
-        const RECAPTCHA_SECRET = '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE';
-
-        if (!RECAPTCHA_SECRET) throw new Error("Chave reCAPTCHA não configurada");
-
-        const verifyAPI = await fetch(
-            'https://www.google.com/recaptcha/api/siteverify',
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    secret: RECAPTCHA_SECRET,
-                    response: recaptchaToken
-                })
-            }
-        );
-
-        const verifyDataAPI = await verifyAPI.json();
-
-        console.log("Resposta Google:", verifyDataAPI);
-
-        if (!verifyDataAPI) {
-            response.statusCode = 400;
+        // 🔐 Verifica reCAPTCHA com chave do .env
+        if (!RECAPTCHA_SECRET) {
+            response.statusCode = 500;
             response.end(JSON.stringify({
                 success: false,
-                error: 'reCAPTCHA inválido',
-            
+                error: 'Erro de configuração do servidor'
             }));
             return;
         }
 
-        // 🔹 Validação extra para v3
-        /*
-        if (verifyDataAPI !== undefined) {
+        const verifyAPI = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                secret: RECAPTCHA_SECRET, // ✅ Agora seguro!
+                response: recaptchaToken
+            })
+        });
+
+        const verifyDataAPI = await verifyAPI.json();
+
+        if (!verifyDataAPI.success) {
             response.statusCode = 400;
             response.end(JSON.stringify({
                 success: false,
-                error: 'Score do reCAPTCHA muito baixo',
-                score: verifyDataAPI
+                error: 'reCAPTCHA inválido'
             }));
             return;
-        }*/
-     
-        console.log("Passou o methodo Post valido para a api recaptcha . . . :)");
-        console.log("reCAPTCHA válido ✔");
+        }
 
-        // 🔹 Validação de login (exemplo fixo)
+        console.log('✅ reCAPTCHA válido');
+
+        // Verifica credenciais (exemplo fixo)
         if (email !== "senac@gmail.com" || password !== "senacoficialmnbvcxz321#@!") {
             response.statusCode = 401;
             response.end(JSON.stringify({
@@ -131,22 +107,22 @@ async function ServerRequest(
             return;
         }
 
-        // ✅ Sucesso
+        // Sucesso
         response.statusCode = 200;
         response.end(JSON.stringify({
             success: true,
-            message: "Login realizado com sucesso!",
+            message: 'Login realizado com sucesso!',
             data: { email }
         }));
 
     } catch (error) {
-        console.error("Erro no backend:", error);
+        console.error('❌ Erro:', error);
 
         if (error instanceof SyntaxError) {
             response.statusCode = 400;
             response.end(JSON.stringify({
                 success: false,
-                error: "JSON inválido"
+                error: 'JSON inválido'
             }));
             return;
         }
@@ -154,12 +130,9 @@ async function ServerRequest(
         response.statusCode = 500;
         response.end(JSON.stringify({
             success: false,
-            error: "Erro interno do servidor"
+            error: 'Erro interno do servidor'
         }));
- 
     }
 }
-
-
 
 export default ServerRequest;
