@@ -1,100 +1,159 @@
 import { IncomingMessage, ServerResponse } from "node:http";
-import { URLSearchParams } from "node:url";
 
-async function Authentific(request: IncomingMessage, response: ServerResponse): Promise<void> {
+// Interface do corpo esperado
+interface LoginRequest {
+    email: string;
+    password: string;
+    recaptchaToken: string;
+}
 
+async function ServerRequest(
+    request: IncomingMessage,
+    response: ServerResponse
+): Promise<void> {
+
+    // Headers CORS
     response.setHeader('Content-Type', 'application/json');
     response.setHeader('Access-Control-Allow-Origin', '*');
     response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+    // Preflight
     if (request.method === 'OPTIONS') {
         response.statusCode = 200;
         response.end();
         return;
     }
 
+    // Apenas POST
     if (request.method !== 'POST') {
         response.statusCode = 405;
         response.end(JSON.stringify({
-            sucesso: false,
-            erro: 'Método não permitido'
+            success: false,
+            error: 'Método não permitido'
         }));
         return;
     }
 
     try {
+        // 🔹 Coletar body
+        let body = '';
 
-        // 🔹 Ler o body como texto
-        const buffers: Buffer[] = [];
-        for await (const chunk of request) {
-            buffers.push(chunk);
-        }
+        await new Promise<void>((resolve, reject) => {
+            request.on('data', chunk => {
+                body += chunk.toString();
+            });
 
-        const rawBody = Buffer.concat(buffers).toString();
+            request.on('end', () => resolve());
 
-        // 🔹 Converter FormData (urlencoded)
-        const formData = new URLSearchParams(rawBody);
+            request.on('error', err => reject(err));
+        });
 
-        const username = formData.get("username");
-        const email = formData.get("email");
-        const phone = formData.get("phone");
-        const password = formData.get("password");
-        const recaptchaToken = formData.get("g-recaptcha-response");
+        // 🔹 Parse JSON
+        const data: LoginRequest = JSON.parse(body);
 
-        if (!recaptchaToken) {
+        const { email, password, recaptchaToken } = data;
+
+        console.log("Body recebido:", {
+            email,
+            password: password ? "[PRESENT]" : "[MISSING]",
+            token: recaptchaToken ? "[PRESENT]" : "[MISSING]"
+        });
+
+        // 🔹 Validar campos obrigatórios
+        if (!email || !password || !recaptchaToken) {
             response.statusCode = 400;
             response.end(JSON.stringify({
-                sucesso: false,
-                erro: "Token reCAPTCHA ausente"
+                success: false,
+                error: 'Campos obrigatórios não preenchidos'
             }));
             return;
         }
 
         // 🔐 Verificar reCAPTCHA no Google
-        const googleResponse = await fetch(
-            "https://www.google.com/recaptcha/api/siteverify",
+        const verifyAPI = await fetch(
+            'https://www.google.com/recaptcha/api/siteverify',
             {
-                method: "POST",
+                method: 'POST',
                 headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 body: new URLSearchParams({
-                    secret_KEY: '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE',
+                    secret: '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE', // ⚠ coloque sua secret key real
+                   //altere depois para esconder
                     response: recaptchaToken
                 })
             }
         );
 
-        const verifyData = await googleResponse.json();
+        const verifyDataAPI = await verifyAPI.json();
 
-        if (!verifyData.success) {
+        console.log("Resposta Google:", verifyDataAPI);
+
+        // 🔴 Verifica sucesso
+        if (!verifyDataAPI.success) {
             response.statusCode = 400;
             response.end(JSON.stringify({
-                sucesso: false,
-                erro: "reCAPTCHA inválido"
+                success: false,
+                error: 'reCAPTCHA inválido',
+                details: verifyDataAPI["error-codes"]
             }));
             return;
         }
 
-        // ✅ Aqui você salvaria no banco
+        // 🔴 Validação extra para reCAPTCHA v3 (score)
+        if (verifyDataAPI.score !== undefined && verifyDataAPI.score < 0.5) {
+            response.statusCode = 400;
+            response.end(JSON.stringify({
+                success: false,
+                error: 'Score do reCAPTCHA muito baixo',
+                score: verifyDataAPI.score
+            }));
+            return;
+        }
 
+        console.log("reCAPTCHA válido ✔");
+
+        // 🔹 Validação de login (exemplo fixo)
+        if (
+            email !== "senac@gmail.com" ||
+            password !== "senacoficialmnbvcxz321#@!"
+        ) {
+            response.statusCode = 401;
+            response.end(JSON.stringify({
+                success: false,
+                error: "Credenciais inválidas"
+            }));
+            return;
+        }
+
+        // ✅ Sucesso
         response.statusCode = 200;
         response.end(JSON.stringify({
-            sucesso: true,
-            mensagem: "Conta criada com sucesso"
+            success: true,
+            message: "Login realizado com sucesso!",
+            data: { email }
         }));
 
     } catch (error) {
 
-        console.error("Erro no servidor:", error);
+        console.error("Erro no backend:", error);
+
+        if (error instanceof SyntaxError) {
+            response.statusCode = 400;
+            response.end(JSON.stringify({
+                success: false,
+                error: "JSON inválido"
+            }));
+            return;
+        }
 
         response.statusCode = 500;
         response.end(JSON.stringify({
-            sucesso: false,
-            erro: "Erro interno do servidor"
+            success: false,
+            error: "Erro interno do servidor"
         }));
     }
 }
 
-export default Authentific;
+export default ServerRequest;
