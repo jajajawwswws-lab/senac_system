@@ -1,4 +1,7 @@
 import { IncomingMessage, ServerResponse } from "node:http";
+import dotenv from "dotenv";
+
+dotenv.config(); // Lê variáveis de ambiente do .env
 
 // Interface do corpo esperado
 interface LoginRequest {
@@ -12,21 +15,21 @@ async function ServerRequest(
     response: ServerResponse
 ): Promise<void> {
 
-    // Headers CORS
+    // 🔹 Headers CORS
     response.setHeader('Content-Type', 'application/json');
     response.setHeader('Access-Control-Allow-Origin', '*');
     response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    // Preflight
+    // 🔹 Preflight
     if (request.method === 'OPTIONS') {
         response.statusCode = 200;
         response.end();
         return;
     }
 
-    // Apenas POST
-    if (request.method !== 'POST' && request.method !== 'GET') {
+    // 🔹 Apenas POST permitido
+    if (request.method !== 'POST') {
         response.statusCode = 405;
         response.end(JSON.stringify({
             success: false,
@@ -36,16 +39,12 @@ async function ServerRequest(
     }
 
     try {
-        // 🔹 Coletar body
+        // 🔹 Coleta do body
         let body = '';
 
         await new Promise<void>((resolve, reject) => {
-            request.on('data', chunk => {
-                body += chunk.toString();
-            });
-
+            request.on('data', chunk => { body += chunk.toString(); });
             request.on('end', () => resolve());
-
             request.on('error', err => reject(err));
         });
 
@@ -60,7 +59,7 @@ async function ServerRequest(
             token: recaptchaToken ? "[PRESENT]" : "[MISSING]"
         });
 
-        // 🔹 Validar campos obrigatórios
+        // 🔹 Campos obrigatórios
         if (!email || !password || !recaptchaToken) {
             response.statusCode = 400;
             response.end(JSON.stringify({
@@ -70,17 +69,17 @@ async function ServerRequest(
             return;
         }
 
-        // 🔐 Verificar reCAPTCHA no Google
+        // 🔹 Verifica reCAPTCHA
+        const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
+        if (!RECAPTCHA_SECRET) throw new Error("Chave reCAPTCHA não configurada");
+
         const verifyAPI = await fetch(
             'https://www.google.com/recaptcha/api/siteverify',
             {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
-                    secret: '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE', // ⚠ coloque sua secret key real
-                   //altere depois para esconder
+                    secret: RECAPTCHA_SECRET,
                     response: recaptchaToken
                 })
             }
@@ -90,18 +89,17 @@ async function ServerRequest(
 
         console.log("Resposta Google:", verifyDataAPI);
 
-        // 🔴 Verifica sucesso
         if (!verifyDataAPI.success) {
             response.statusCode = 400;
             response.end(JSON.stringify({
                 success: false,
                 error: 'reCAPTCHA inválido',
-                details: verifyDataAPI["error-codes"]
+                details: verifyDataAPI["error-codes"] || []
             }));
             return;
         }
 
-        // 🔴 Validação extra para reCAPTCHA v3 (score)
+        // 🔹 Validação extra para v3
         if (verifyDataAPI.score !== undefined && verifyDataAPI.score < 0.5) {
             response.statusCode = 400;
             response.end(JSON.stringify({
@@ -115,10 +113,7 @@ async function ServerRequest(
         console.log("reCAPTCHA válido ✔");
 
         // 🔹 Validação de login (exemplo fixo)
-        if (
-            email !== "senac@gmail.com" ||
-            password !== "senacoficialmnbvcxz321#@!"
-        ) {
+        if (email !== "senac@gmail.com" || password !== "senacoficialmnbvcxz321#@!") {
             response.statusCode = 401;
             response.end(JSON.stringify({
                 success: false,
@@ -136,7 +131,6 @@ async function ServerRequest(
         }));
 
     } catch (error) {
-
         console.error("Erro no backend:", error);
 
         if (error instanceof SyntaxError) {
