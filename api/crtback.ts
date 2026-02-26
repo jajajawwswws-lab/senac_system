@@ -2,39 +2,53 @@ import { IncomingMessage, ServerResponse } from "node:http";
 import dotenv from "dotenv";
 import path from "path";
 
-// Carrega variáveis de ambiente
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-const RECAPTCHA_SECRET = '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE'
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
 
 if (!RECAPTCHA_SECRET) {
     console.error('❌ RECAPTCHA_SECRET não configurada no .env');
 }
 
-interface LoginRequest {
+interface SignupRequest {
+    username: string;
     email: string;
+    phone: string;
     password: string;
     recaptchaToken: string;
 }
 
-async function ServerRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
+async function handleSignup(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    // Log da requisição
+    console.log(`📥 ${req.method} ${req.url}`);
+
     // CORS headers
-    response.setHeader('Content-Type', 'application/json');
-    response.setHeader('Access-Control-Allow-Origin', '*');
-    response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     // Preflight
-    if (request.method === 'OPTIONS') {
-        response.statusCode = 200;
-        response.end();
+    if (req.method === 'OPTIONS') {
+        res.statusCode = 200;
+        res.end();
+        return;
+    }
+
+    // Roteamento
+    if (req.url !== "/api/crtback") {
+        res.statusCode = 404;
+        res.end(JSON.stringify({
+            success: false,
+            error: 'Rota não encontrada'
+        }));
         return;
     }
 
     // Apenas POST
-    if (request.method !== 'POST') {
-        response.statusCode = 405;
-        response.end(JSON.stringify({
+    if (req.method !== 'POST') {
+        res.statusCode = 405;
+        res.end(JSON.stringify({
             success: false,
             error: 'Método não permitido'
         }));
@@ -42,33 +56,32 @@ async function ServerRequest(request: IncomingMessage, response: ServerResponse)
     }
 
     try {
-        // Coleta body
-        let body = '';
-        const bodyData = await new Promise<string>((resolve, reject) => {
-            request.on('data', (chunk) => { body += chunk.toString(); });
-            request.on('end', () => resolve(body));
-            request.on('error', (err) => reject(err));
+        // Coleta body usando Promise (mais elegante)
+        const body = await new Promise<string>((resolve, reject) => {
+            let data = '';
+            req.on('data', (chunk) => { data += chunk.toString(); });
+            req.on('end', () => resolve(data));
+            req.on('error', (err) => reject(err));
         });
 
-        const data: LoginRequest = JSON.parse(bodyData);
-        const { email, password, recaptchaToken } = data;
+        const { username, email, phone, password, recaptchaToken }: SignupRequest = JSON.parse(body);
 
-        console.log('📧 Email:', email);
+        console.log('📦 Dados recebidos:', { username, email, phone });
 
         // Valida campos obrigatórios
-        if (!email || !password || !recaptchaToken) {
-            response.statusCode = 400;
-            response.end(JSON.stringify({
+        if (!username || !email || !phone || !password || !recaptchaToken) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({
                 success: false,
-                error: 'Campos obrigatórios não preenchidos'
+                error: 'Todos os campos são obrigatórios'
             }));
             return;
         }
 
-        // 🔐 Verifica reCAPTCHA com chave do .env
+        // Verifica reCAPTCHA
         if (!RECAPTCHA_SECRET) {
-            response.statusCode = 500;
-            response.end(JSON.stringify({
+            res.statusCode = 500;
+            res.end(JSON.stringify({
                 success: false,
                 error: 'Erro de configuração do servidor'
             }));
@@ -79,16 +92,17 @@ async function ServerRequest(request: IncomingMessage, response: ServerResponse)
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
-                secret: RECAPTCHA_SECRET, // ✅ Agora seguro!
+                secret: RECAPTCHA_SECRET,
                 response: recaptchaToken
             })
         });
 
-        const verifyDataAPI = await verifyAPI.json();
+        const verifyData = await verifyAPI.json();
 
-        if (!verifyDataAPI.success) {
-            response.statusCode = 400;
-            response.end(JSON.stringify({
+        if (!verifyData.success) {
+            console.log('❌ reCAPTCHA inválido:', verifyData['error-codes']);
+            res.statusCode = 400;
+            res.end(JSON.stringify({
                 success: false,
                 error: 'reCAPTCHA inválido'
             }));
@@ -97,42 +111,32 @@ async function ServerRequest(request: IncomingMessage, response: ServerResponse)
 
         console.log('✅ reCAPTCHA válido');
 
-        // Verifica credenciais (exemplo fixo)
-        if (email !== "senac@gmail.com" || password !== "senacoficialmnbvcxz321#@!") {
-            response.statusCode = 401;
-            response.end(JSON.stringify({
-                success: false,
-                error: "Credenciais inválidas"
-            }));
-            return;
-        }
-
-        // Sucesso
-        response.statusCode = 200;
-        response.end(JSON.stringify({
+        // ✅ Sucesso!
+        res.statusCode = 200;
+        res.end(JSON.stringify({
             success: true,
-            message: 'Login realizado com sucesso!',
-            data: { email }
+            message: 'Conta criada com sucesso!',
+            data: { username, email }
         }));
 
     } catch (error) {
         console.error('❌ Erro:', error);
 
         if (error instanceof SyntaxError) {
-            response.statusCode = 400;
-            response.end(JSON.stringify({
+            res.statusCode = 400;
+            res.end(JSON.stringify({
                 success: false,
                 error: 'JSON inválido'
             }));
             return;
         }
 
-        response.statusCode = 500;
-        response.end(JSON.stringify({
+        res.statusCode = 500;
+        res.end(JSON.stringify({
             success: false,
             error: 'Erro interno do servidor'
         }));
     }
 }
 
-export default ServerRequest;
+export default handleSignup;
