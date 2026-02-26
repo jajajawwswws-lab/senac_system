@@ -1,3 +1,6 @@
+/*
+
+
 import http from "node:http";
 import dotenv from "dotenv";
 import path from "path";
@@ -138,3 +141,4 @@ const server = http.createServer((req, res) => {
 
 // ✅ Exporta para Vercel (NÃO usa listen)
 export default server;
+*/
