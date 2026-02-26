@@ -10,7 +10,7 @@ const RECAPTCHA_SECRET = '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE';
 if (!RECAPTCHA_SECRET) {
     console.error('❌ RECAPTCHA_SECRET não configurada no .env');
 }
-
+//lllll
 interface SignupRequest {
     username: string;
     email: string;
