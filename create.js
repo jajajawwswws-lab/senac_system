@@ -1,3 +1,4 @@
+// create_account.js - VERSÃO CORRIGIDA
 
 document.addEventListener('DOMContentLoaded', function() {
     // Elementos do DOM
@@ -18,7 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 🔑 CHAVE DO SITE reCAPTCHA
     const RECAPTCHA_SITE_KEY = '6LeJZ28sAAAAAMgcIEAe0vm2GHIKZUZRucVyeiYU';
     
+    // ✅ URL CORRETA - sem barra no final
     const API_URL = 'https://senac-system.vercel.app/api/crtback';
+    
     // Validação em tempo real
     let isFormValid = {
         username: false,
@@ -116,16 +119,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const digitCount = phoneDigits.length;
         
-        if (digitCount >= 10) {
-            const regex_phone = /^\((68|82|96|92|97|71|73|74|75|77|85|88|61|27|28|62|64|98|99|65|66|67|31|32|33|34|35|37|38|91|93|94|83|41|42|43|44|45|46|81|87|86|89|21|22|24|84|51|53|54|55|69|95|47|48|49|11|12|13|14|15|16|17|18|19|79|63)\)\s?\d{4,5}-\d{4}$/;
+        if (digitCount >= 10 && digitCount <= 11) {
+            // Regex simplificado para telefone brasileiro
+            const regex_phone = /^\(\d{2}\)\s\d{4,5}-\d{4}$/;
             
             if (!regex_phone.test(this.value)) {
                 showFieldError(this, 'Please use format: (DDD) 99999-9999');
                 isFormValid.phone = false;
             } else {
+                clearFieldError(this);
                 isFormValid.phone = true;
             }
         } else {
+            showFieldError(this, 'Phone must have 10 or 11 digits');
             isFormValid.phone = false;
         }
         
@@ -194,6 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let score = 0;
         
+        // Critérios de força
         if (password.length >= 8) score += 1;
         if (password.length >= 12) score += 1;
         if (/[a-z]/.test(password)) score += 1;
@@ -201,6 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (/[0-9]/.test(password)) score += 1;
         if (/[^a-zA-Z0-9]/.test(password)) score += 1;
         
+        // Ajusta para escala de 1-5
         return Math.min(Math.max(score, 1), 5);
     }
 
@@ -220,41 +228,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showFieldError(inputElement, message) {
+        // Remove erro anterior se existir
         clearFieldError(inputElement);
         
         inputElement.classList.add('border-red-500');
         
         const errorDiv = document.createElement('div');
-        errorDiv.className = 'mt-1 text-sm text-red-600 fade-in';
+        errorDiv.className = 'text-red-600 text-sm mt-1';
         errorDiv.textContent = message;
         
-        inputElement.parentNode.insertBefore(errorDiv, inputElement.nextSibling);
+        inputElement.parentNode.appendChild(errorDiv);
     }
 
     function clearFieldError(inputElement) {
         inputElement.classList.remove('border-red-500');
         
-        const errorDiv = inputElement.parentNode.querySelector('.text-red-600');
-        if (errorDiv) {
-            errorDiv.remove();
-        }
+        // Remove todas as mensagens de erro deste input
+        const parent = inputElement.parentNode;
+        const errorMessages = parent.querySelectorAll('.text-red-600');
+        errorMessages.forEach(msg => msg.remove());
     }
 
     function updateSubmitButton() {
+        // Verifica se TODOS os campos são válidos
         const allValid = isFormValid.username && 
                         isFormValid.email && 
+                        isFormValid.phone &&  // ✅ Adicionado phone que estava faltando
                         isFormValid.password && 
                         isFormValid.confirmPassword;
         
         submitButton.disabled = !allValid;
         
         if (allValid) {
-            submitButton.classList.add('bg-orange-400', 'hover:bg-orange-500', 'cursor-pointer');
-            submitButton.classList.remove('bg-gray-300', 'cursor-not-allowed');
+            submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitButton.classList.add('cursor-pointer');
             submitButton.style.backgroundColor = '#FAA628';
         } else {
-            submitButton.classList.add('bg-gray-300', 'cursor-not-allowed');
-            submitButton.classList.remove('bg-orange-400', 'hover:bg-orange-500', 'cursor-pointer');
+            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+            submitButton.classList.remove('cursor-pointer');
             submitButton.style.backgroundColor = '#D1D5DB';
         }
     }
@@ -270,12 +281,26 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.innerHTML = '<span class="spinner"></span> Creating account...';
             
             try {
-                if (typeof grecaptcha === 'undefined') {
-                    throw new Error('reCAPTCHA não carregado');
+                // Verificar se reCAPTCHA está carregado
+                if (typeof grecaptcha === 'undefined' || !grecaptcha.execute) {
+                    throw new Error('reCAPTCHA not loaded');
                 }
                 
                 // Executar reCAPTCHA
+                console.log('🔄 Executando reCAPTCHA...');
                 const token = await grecaptcha.execute(RECAPTCHA_SITE_KEY, {action: 'register'});
+                console.log('✅ Token obtido:', token.substring(0, 20) + '...');
+                
+                // Preparar dados
+                const userData = {
+                    username: usernameInput.value.trim(),
+                    email: emailInput.value.trim(),
+                    phone: phoneInput.value.replace(/\D/g, ''), // Remove formatação
+                    password: passwordInput.value,
+                    recaptchaToken: token
+                };
+                
+                console.log('📤 Enviando dados para:', API_URL);
                 
                 // Enviar para o backend
                 const respostaBackend = await fetch(API_URL, {
@@ -283,35 +308,44 @@ document.addEventListener('DOMContentLoaded', function() {
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({
-                        username: usernameInput.value.trim(),
-                        email: emailInput.value.trim(),
-                        phone: phoneInput.value,
-                        password: passwordInput.value,
-                        recaptchaToken: token
-                    })
+                    body: JSON.stringify(userData)
                 });
 
-                const resultado = await respostaBackend.json();
+                // Primeiro pegar como texto para debug
+                const textResponse = await respostaBackend.text();
+                console.log('📥 Resposta bruta:', textResponse);
+
+                // Tentar parsear como JSON
+                let resultado;
+                try {
+                    resultado = JSON.parse(textResponse);
+                } catch (e) {
+                    console.error('❌ Resposta não é JSON válido:', textResponse);
+                    throw new Error('Invalid server response');
+                }
 
                 if (!respostaBackend.ok || !resultado.success) {
-                    throw new Error(resultado.error || 'Erro no servidor');
+                    throw new Error(resultado.error || 'Server error');
                 }
                 
                 // Sucesso!
                 alert("✅ Account created successfully!");
                 form.reset();
-                window.location.href = "index.html";
+                
+                // Redirecionar após sucesso
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1500);
                 
             } catch (error) {
-                console.error('Erro:', error);
+                console.error('❌ Erro detalhado:', error);
                 
                 // Mensagens de erro amigáveis
                 let errorMessage = '❌ Registration failed. ';
                 
                 if (!navigator.onLine) {
                     errorMessage = '❌ No internet connection. Please check your network.';
-                } else if (error.message === 'reCAPTCHA não carregado') {
+                } else if (error.message === 'reCAPTCHA not loaded') {
                     errorMessage = '❌ Security verification failed. Please refresh the page.';
                 } else if (error.message.includes('Failed to fetch')) {
                     errorMessage = '❌ Server unavailable. Please try again later.';
@@ -333,10 +367,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Validação inicial silenciosa
+    // Validação inicial
     setTimeout(() => {
+        // Trigger eventos para validação inicial
         usernameInput.dispatchEvent(new Event('input'));
         emailInput.dispatchEvent(new Event('input'));
+        phoneInput.dispatchEvent(new Event('input'));
         passwordInput.dispatchEvent(new Event('input'));
         confirmPasswordInput.dispatchEvent(new Event('input'));
     }, 100);
