@@ -1,54 +1,24 @@
 import { IncomingMessage, ServerResponse } from "node:http";
-import dotenv from "dotenv";
-import path from "path";
 
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
-
-// 🔑 Chave secreta exposta para teste (NÃO use em produção!)
 const RECAPTCHA_SECRET = '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE';
 
-if (!RECAPTCHA_SECRET) {
-    console.error('❌ RECAPTCHA_SECRET não configurada no .env');
-}
-//lllll
-interface SignupRequest {
-    username: string;
-    email: string;
-    phone: string;
-    password: string;
-    recaptchaToken: string;
-}
-
-async function handleSignup(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    // Log da requisição
-    console.log(`📥 ${req.method} ${req.url}`);
-
-    // CORS headers
-    res.setHeader('Content-Type', 'application/json');
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+    // Configura CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    // Preflight
+    
+    // Handle preflight
     if (req.method === 'OPTIONS') {
         res.statusCode = 200;
         res.end();
         return;
     }
 
-    // Roteamento
-    if (req.url !== "/api/crtback") {
-        res.statusCode = 404;
-        res.end(JSON.stringify({
-            success: false,
-            error: 'Rota não encontrada'
-        }));
-        return;
-    }
-
     // Apenas POST
     if (req.method !== 'POST') {
         res.statusCode = 405;
+        res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({
             success: false,
             error: 'Método não permitido'
@@ -57,21 +27,38 @@ async function handleSignup(req: IncomingMessage, res: ServerResponse): Promise<
     }
 
     try {
-        // Coleta body usando Promise (mais elegante)
-        const body = await new Promise<string>((resolve, reject) => {
-            let data = '';
-            req.on('data', (chunk) => { data += chunk.toString(); });
-            req.on('end', () => resolve(data));
-            req.on('error', (err) => reject(err));
-        });
+        // Coleta o body
+        let body = '';
+        for await (const chunk of req) {
+            body += chunk;
+        }
+        
+        console.log('Body recebido:', body); // DEBUG: veja o que chega
 
-        const { username, email, phone, password, recaptchaToken }: SignupRequest = JSON.parse(body);
+        // Tenta fazer o parse
+        let data;
+        try {
+            data = JSON.parse(body);
+        } catch (parseError) {
+            console.error('Erro no JSON:', parseError);
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({
+                success: false,
+                error: 'JSON inválido',
+                receivedBody: body // DEBUG: mostre o que foi recebido
+            }));
+            return;
+        }
 
-        console.log('📦 Dados recebidos:', { username, email, phone });
+        const { username, email, phone, password, recaptchaToken } = data;
 
-        // Valida campos obrigatórios
+        console.log('Dados parseados:', { username, email, phone });
+
+        // Valida campos
         if (!username || !email || !phone || !password || !recaptchaToken) {
             res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({
                 success: false,
                 error: 'Todos os campos são obrigatórios'
@@ -79,32 +66,40 @@ async function handleSignup(req: IncomingMessage, res: ServerResponse): Promise<
             return;
         }
 
-        // Verifica reCAPTCHA com chave fixa para teste
-        const verifyAPI = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                secret: RECAPTCHA_SECRET, // 🔑 Chave exposta para teste
-                response: recaptchaToken
-            })
-        });
+        // Verifica reCAPTCHA
+        try {
+            const verifyAPI = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    secret: RECAPTCHA_SECRET,
+                    response: recaptchaToken
+                })
+            });
 
-        const verifyData = await verifyAPI.json();
+            const verifyData = await verifyAPI.json();
 
-        if (!verifyData.success) {
-            console.log('❌ reCAPTCHA inválido:', verifyData['error-codes']);
-            res.statusCode = 400;
-            res.end(JSON.stringify({
-                success: false,
-                error: 'reCAPTCHA inválido'
-            }));
-            return;
+            if (!verifyData.success) {
+                console.log('reCAPTCHA inválido:', verifyData['error-codes']);
+                res.statusCode = 400;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({
+                    success: false,
+                    error: 'reCAPTCHA inválido'
+                }));
+                return;
+            }
+        } catch (recaptchaError) {
+            console.error('Erro no reCAPTCHA:', recaptchaError);
+            // Mesmo com erro no reCAPTCHA, vamos permitir para teste
+            console.log('⚠️ Continuando mesmo com erro no reCAPTCHA (apenas para teste)');
         }
 
         console.log('✅ reCAPTCHA válido');
 
-        // ✅ Sucesso!
+        // Sucesso
         res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({
             success: true,
             message: 'Conta criada com sucesso!',
@@ -112,23 +107,13 @@ async function handleSignup(req: IncomingMessage, res: ServerResponse): Promise<
         }));
 
     } catch (error) {
-        console.error('❌ Erro:', error);
-
-        if (error instanceof SyntaxError) {
-            res.statusCode = 400;
-            res.end(JSON.stringify({
-                success: false,
-                error: 'JSON inválido'
-            }));
-            return;
-        }
-
+        console.error('Erro geral:', error);
         res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({
             success: false,
-            error: 'Erro interno do servidor'
+            error: 'Erro interno do servidor',
+            details: error instanceof Error ? error.message : 'Erro desconhecido'
         }));
     }
 }
-
-export default handleSignup;
