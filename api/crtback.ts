@@ -1,5 +1,7 @@
-// backend simplificado para teste
-export default async function handler(req, res) {
+import { IncomingMessage, ServerResponse } from 'http';
+
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+    // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     
@@ -11,46 +13,37 @@ export default async function handler(req, res) {
 
     if (req.method !== 'POST') {
         res.statusCode = 405;
-        res.end(JSON.stringify({ success: false, error: 'Método não permitido' }));
+        res.end(JSON.stringify({ success: false }));
         return;
     }
 
     try {
+        // Lê o body
         let body = '';
         for await (const chunk of req) {
             body += chunk;
         }
         
         const data = JSON.parse(body);
-        const { username, email, phone, password, recaptchaToken } = data;
-
-        // Valida campos obrigatórios
-        if (!username || !email || !phone || !password) {
-            res.statusCode = 400;
-            res.end(JSON.stringify({
-                success: false,
-                error: 'Todos os campos são obrigatórios'
-            }));
-            return;
-        }
-
-        // Para teste, ignora reCAPTCHA
-        console.log('Dados recebidos:', { username, email, phone });
+        console.log('✅ Dados recebidos:', data);
         
-        // Sucesso
+        // Sempre retorna sucesso para teste
         res.statusCode = 200;
         res.end(JSON.stringify({
             success: true,
-            message: 'Conta criada com sucesso!',
-            data: { username, email }
+            message: 'Conta criada!',
+            data: { 
+                username: data.username,
+                email: data.email 
+            }
         }));
 
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('❌ Erro:', error);
         res.statusCode = 500;
-        res.end(JSON.stringify({
-            success: false,
-            error: 'Erro interno do servidor'
+        res.end(JSON.stringify({ 
+            success: false, 
+            error: 'Erro interno' 
         }));
     }
 }
