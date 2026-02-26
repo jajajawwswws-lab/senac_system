@@ -1,13 +1,13 @@
 import { IncomingMessage, ServerResponse } from "node:http";
 
-// 🔹 CHAVE SECRETA DO reCAPTCHA - EXPOSTA (apenas para teste!)
-const RECAPTCHA_SECRET = '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE';
+// 🔹 CHAVE SECRETA DO reCAPTCHA - não usaremos mais
+// const RECAPTCHA_SECRET = '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE';
 
 // Interface do corpo esperado
 interface LoginRequest {
     email: string;
     password: string;
-    recaptchaToken: string;
+    recaptchaToken?: string; // Agora opcional
 }
 
 // Função para validar email com regex
@@ -77,20 +77,18 @@ async function ServerRequest(
             return;
         }
 
-        const { email, password, recaptchaToken } = data;
+        const { email, password } = data; // Ignoramos o recaptchaToken
 
         console.log("📥 Body recebido:", {
             email: email || '[AUSENTE]',
-            password: password ? '[PRESENTE]' : '[AUSENTE]',
-            token: recaptchaToken ? '[PRESENTE]' : '[AUSENTE]'
+            password: password ? '[PRESENTE]' : '[AUSENTE]'
         });
 
-        // 🔹 1. VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS
-        if (!email || !password || !recaptchaToken) {
+        // 🔹 1. VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS (agora sem recaptcha)
+        if (!email || !password) {
             const missingFields = [];
             if (!email) missingFields.push('email');
             if (!password) missingFields.push('password');
-            if (!recaptchaToken) missingFields.push('recaptchaToken');
             
             response.statusCode = 400;
             response.end(JSON.stringify({
@@ -129,44 +127,10 @@ async function ServerRequest(
             return;
         }
 
-        // 🔹 4. VALIDAÇÃO DO reCAPTCHA
-        console.log("🔄 Validando reCAPTCHA...");
-        
-        try {
-            const verifyAPI = await fetch(
-                'https://www.google.com/recaptcha/api/siteverify',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        secret: RECAPTCHA_SECRET,
-                        response: recaptchaToken
-                    })
-                }
-            );
+        // 🔹 4. PULAMOS VALIDAÇÃO DO reCAPTCHA COMPLETAMENTE
+        console.log("⏭️ Validação do reCAPTCHA ignorada (modo desenvolvimento)");
 
-            const verifyDataAPI = await verifyAPI.json();
-
-            console.log("🔐 Resposta do Google:", JSON.stringify(verifyDataAPI, null, 2));
-
-            // Verifica se o reCAPTCHA foi aprovado
-         
-            // Opcional: verificar score se for reCAPTCHA v3
-           
-
-            console.log("✅ reCAPTCHA válido!");
-
-        } catch (recaptchaError) {
-            console.error("❌ Erro na validação do reCAPTCHA:", recaptchaError);
-            response.statusCode = 500;
-            response.end(JSON.stringify({
-                success: false,
-                error: "Erro ao validar reCAPTCHA"
-            }));
-            return;
-        }
-
-        // 🔹 5. SUCESSO - Login aceito!
+        // 🔹 5. SUCESSO - Login aceito! SEMPRE VAI LOGAR
         console.log(`✅ Login bem-sucedido: ${email}`);
         
         response.statusCode = 200;
@@ -176,7 +140,8 @@ async function ServerRequest(
             data: { 
                 email,
                 authenticated: true,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                redirect: "index.html" // Informa para onde redirecionar
             }
         }));
 
