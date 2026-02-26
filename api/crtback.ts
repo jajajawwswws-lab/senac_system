@@ -4,7 +4,8 @@ import path from "path";
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
+// 🔑 Chave secreta exposta para teste (NÃO use em produção!)
+const RECAPTCHA_SECRET = '6LeJZ28sAAAAAO3iQx4CXaN7xAvZNw2fnaacmCYE';
 
 if (!RECAPTCHA_SECRET) {
     console.error('❌ RECAPTCHA_SECRET não configurada no .env');
@@ -78,21 +79,12 @@ async function handleSignup(req: IncomingMessage, res: ServerResponse): Promise<
             return;
         }
 
-        // Verifica reCAPTCHA
-        if (!RECAPTCHA_SECRET) {
-            res.statusCode = 500;
-            res.end(JSON.stringify({
-                success: false,
-                error: 'Erro de configuração do servidor'
-            }));
-            return;
-        }
-
+        // Verifica reCAPTCHA com chave fixa para teste
         const verifyAPI = await fetch('https://www.google.com/recaptcha/api/siteverify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
-                secret: RECAPTCHA_SECRET,
+                secret: RECAPTCHA_SECRET, // 🔑 Chave exposta para teste
                 response: recaptchaToken
             })
         });
